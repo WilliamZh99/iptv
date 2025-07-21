@@ -1,0 +1,34 @@
+name: Generate TVHeadend Playlist
+
+on:
+  push:
+    branches:
+      - main # 或者您的主分支名，可能是 master
+    paths:
+      - 'zjcmcc.m3u'
+  workflow_dispatch:
+
+jobs:
+  generate-playlist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate TVHeadend M3U
+        run: |
+          sed "s|^http.*|pipe:///usr/bin/streamlink '&' best -O|g" zjcmcc.m3u > tvheadend_list.m3u
+          echo "TVHeadend playlist generated successfully."
+
+      - name: Commit and push generated file
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add tvheadend_list.m3u
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "Automated: Update TVHeadend playlist"
+            git push
+            echo "Committed and pushed the updated playlist."
+          else
+            echo "No changes to the playlist. Nothing to commit."
+          fi
